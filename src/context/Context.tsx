@@ -1,7 +1,9 @@
 import { createContext, useState } from "react";
 import runChat from "../config/gemini";
+import markdownit from 'markdown-it';
+import hljs from 'highlight.js'
 
-type GeminiContextType = {
+interface GeminiContextType {
     prevPrompt: any;
     setPrevPrompt: any;
     onSent: any;
@@ -14,7 +16,25 @@ type GeminiContextType = {
     setInput: any;
 }
 
-export const Context = createContext<GeminiContextType | null>(null);
+const md = markdownit({
+    html: true,
+    linkify: true,
+    typographer: true,
+    langPrefix: 'language-',
+    highlight: function (str, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return hljs.highlight(str, { language: lang }).value;
+            } catch (__) { }
+        }
+
+        return ''; // use external default escaping
+    }
+});
+
+hljs.highlightAuto()
+
+export const Context = createContext<GeminiContextType | undefined>(undefined);
 
 const ContextProvider = (props: any) => {
     const [input, setInput] = useState("");
@@ -24,9 +44,27 @@ const ContextProvider = (props: any) => {
     const [loading, setLoading] = useState(false);
     const [resultData, setResultData] = useState("");
 
-    const onSent = async (prompt: any) => {
+    const depayPara = (index:number, nextWord:string) => {
+        setTimeout(function () {
+            setResultData(prev => prev + nextWord)
+        }, 75 * index);
+    }
 
-        await runChat(prompt);
+    const onSent = async (prompt: any) => {
+        setResultData("");
+        setLoading(true);
+        setShowResult(true);
+        setRecentPrompt(input);
+        const response = await runChat(input);
+        const newResArray = md.render(response).split(" ");
+        for (let i = 0; i < newResArray.length; i++) {
+            const nextWord = newResArray[i];
+            depayPara(i, nextWord+" ");
+            
+        }
+        // setResultData(md.render(response));
+        setLoading(false);
+        setInput("")
     }
 
     const contextValue = {
