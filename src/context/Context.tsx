@@ -20,19 +20,16 @@ const md = markdownit({
     html: true,
     linkify: true,
     typographer: true,
-    langPrefix: 'language-',
-    highlight: function (str, lang) {
+    highlight: (code, lang) => {
+        console.log(hljs.getLanguage(lang), 'hljs.getLanguage(lang) | hljs.getLanguage(lang)');
         if (lang && hljs.getLanguage(lang)) {
             try {
-                return hljs.highlight(str, { language: lang }).value;
-            } catch (__) { }
+                return hljs.highlight(code, { language: lang }).value;
+            } catch (_) { }
         }
-
-        return ''; // use external default escaping
-    }
+        return '';
+    },
 });
-
-hljs.highlightAuto()
 
 export const Context = createContext<GeminiContextType | undefined>(undefined);
 
@@ -44,7 +41,7 @@ const ContextProvider = (props: any) => {
     const [loading, setLoading] = useState(false);
     const [resultData, setResultData] = useState("");
 
-    const depayPara = (index:number, nextWord:string) => {
+    const depayPara = (index: number, nextWord: string) => {
         setTimeout(function () {
             setResultData(prev => prev + nextWord)
         }, 75 * index);
@@ -59,8 +56,8 @@ const ContextProvider = (props: any) => {
         const newResArray = md.render(response).split(" ");
         for (let i = 0; i < newResArray.length; i++) {
             const nextWord = newResArray[i];
-            depayPara(i, nextWord+" ");
-            
+            depayPara(i, nextWord + " ");
+
         }
         // setResultData(md.render(response));
         setLoading(false);
